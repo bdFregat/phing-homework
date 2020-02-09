@@ -1,31 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="phing-homework" default="composer-install" basedir="./">
+<project name="phing-homework" default="switch" basedir="./">
     <target name="vars">
         <php returnProperty="build.time" function="date">
             <param value="Y-m-d-H-i-s"/>
         </php>
-        <property name="build.dir" value="home/phil/server/${build.time}"/>
+        <property name="build.dir" value="server/${build.time}"/>
+        <property name="build.domain" value="domain-name.com"/>
     </target>
-    <target name="copy-files">
-        <copy todir="{build.dir}/public" overwrite="true">
+    <target name="copy-files" depends="vars">
+        <copy todir="${build.dir}" overwrite="true">
             <fileset dir="${project.basedir}/">
-                <include name="**"/>
-                <exclude name=".idea"/>
+                <patternset>
+                    <include name="**"/>
+                    <exclude name=".idea/**"/>
+                    <exclude name="vendor/**"/>
+                    <exclude name="server/**"/>
+                    <exclude name="current/**"/>
+                </patternset>
             </fileset>
         </copy>
     </target>
     <target name="make-config" depends="copy-files">
-        <copy todir="{build.dir}/public" file="params.php"
+        <copy todir="${build.dir}/config/" file="${project.basedir}/build/production/params.php"
               overwrite="true">
             <filterchain>
                 <replacetokens begintoken="{{" endtoken="}}">
-                    <token key="stage" value="pro"/>
+                    <token key="domain" value="${build.domain}"/>
                 </replacetokens>
             </filterchain>
         </copy>
     </target>
     <target name="composer-install" depends="make-config">
-        <exec command="composer install" dir="{build.dir}/" passthru="true"/>
+        <exec command="composer install" dir="${build.dir}" passthru="true"/>
+    </target>
+    <target name="switch" depends="composer-install">
+        <symlink target="${build.dir}" link="current" overwrite="true"/>
     </target>
 </project>
