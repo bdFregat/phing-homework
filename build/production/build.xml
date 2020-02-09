@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="phing-homework" default="composer-install" basedir="./">
+    <target name="vars">
+        <php returnProperty="build.time" function="date">
+            <param value="Y-m-d-H-i-s"/>
+        </php>
+        <property name="build.dir" value="home/phil/server/${build.time}"/>
+    </target>
+    <target name="copy-files">
+        <copy todir="{build.dir}/public" overwrite="true">
+            <fileset dir="${project.basedir}/">
+                <include name="**"/>
+                <exclude name=".idea"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="make-config" depends="copy-files">
+        <copy todir="{build.dir}/public" file="params.php"
+              overwrite="true">
+            <filterchain>
+                <replacetokens begintoken="{{" endtoken="}}">
+                    <token key="stage" value="pro"/>
+                </replacetokens>
+            </filterchain>
+        </copy>
+    </target>
+    <target name="composer-install" depends="make-config">
+        <exec command="composer install" dir="{build.dir}/" passthru="true"/>
+    </target>
+</project>
